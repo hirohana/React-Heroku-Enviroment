@@ -19,6 +19,9 @@ const useArticles = () => {
   const [data, setData] = useState<ARTICLES_DATA_AND_PAGINATION>();
   const [searchKeyword, setSearchKeyword] = useState('');
   const { search } = useLocation();
+  const query = new URLSearchParams(search);
+  let page = Number(query.get('page')) || 1;
+
   const navigate = useNavigate();
 
   // 記事検索した際のクエリパラメータkeywordに曖昧一致する記事及び、OFFSET(1ページにおける最大記事数6)
@@ -27,10 +30,10 @@ const useArticles = () => {
   useEffect(() => {
     (async () => {
       try {
-        const query = new URLSearchParams(search);
-        let keyword = query.get('keyword') || '';
-        let page = Number(query.get('page')) || 1;
-        setSearchKeyword(keyword);
+        // const query = new URLSearchParams(search);
+        // let keyword = query.get('keyword') || '';
+        // let page = Number(query.get('page')) || 1;
+        // setSearchKeyword(keyword);
         const response = await fetch(
           `${config.BACKEND_URL}/articles/page/${page}`
         );
@@ -40,7 +43,7 @@ const useArticles = () => {
         console.error(err);
       }
     })();
-  }, [search]);
+  }, [page]);
 
   // 記事検索した際のクエリパラメータkeywordに曖昧一致した記事を取得する。
   // 最新記事から6記事取得。Articlesページで使用されている。
@@ -130,21 +133,11 @@ const useUserArticleList = () => {
 
   return { data };
 };
-// {
-//   article_id: null,
-//   article_photo_url: null,
-//   created_at: null,
-//   letter_body: null,
-//   public: null,
-//   title: null,
-//   user_id: null,
-//   user_photo_url: null,
-//   username: null,
-// }
+
 // UserArticlePostページで使用するフック。
 const useUserArticlePost = () => {
   const [data, setData] = useState<
-    [ARTICLE_DATA_FOR_USER_ARTICLE_LIST, { name: string }[]]
+    [ARTICLE_DATA_FOR_USER_ARTICLE_LIST, { id: number; name: string }[]]
   >([
     {
       article_id: null,
