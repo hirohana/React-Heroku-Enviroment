@@ -8,11 +8,11 @@ import {
   ARTICLE_DATA,
   ARTICLES_DATA_AND_PAGINATION_FOR_USER_ARTICLE_LIST,
   ARTICLE_DATA_FOR_USER_ARTICLE_LIST,
+  DRAFT_ARTICLE_DATA_FOR_USER_ARTICLE_LIST,
 } from 'types/articles/articles';
 import { config } from 'config/applicationConfig';
 import { useSelector } from 'react-redux';
 import { selectUser } from 'reducks/user/selectUser';
-import sweetAlertOfError from 'utils/sweetAlert/sweetAlertOfError';
 
 // articlesページのフック。
 const useArticles = () => {
@@ -123,53 +123,82 @@ const useUserArticleList = () => {
 
 // UserArticlePostページで使用するフック。
 const useUserArticlePost = () => {
-  const [data, setData] = useState<
-    [ARTICLE_DATA_FOR_USER_ARTICLE_LIST, { id: number; name: string }[]]
-  >([
-    {
-      article_id: null,
-      article_photo_url: null,
-      created_at: null,
-      letter_body: null,
-      public: null,
-      title: null,
-      user_id: null,
-      user_photo_url: null,
-      username: null,
-    },
-    [],
-  ]);
-  const { user } = useSelector(selectUser);
-  const { article_id } = useParams();
+  const [data, setData] = useState<{
+    data: DRAFT_ARTICLE_DATA_FOR_USER_ARTICLE_LIST[];
+    categories: { id: number; name: string }[];
+  }>({ data: [], categories: [] });
+  const [category, setCategory] = useState([]);
+  const { id } = useParams();
 
+  // URLパラメータから記事IDを取得できれば、つまりarticlesに下書きデータが存在すれば
+  // ↓のuseEffectを実行。
   useEffect(() => {
+    if (!id) {
+      return;
+    }
     (async () => {
-      // 記事データベース(articles)からユーザーの下書き記事データを取得する関数
+      // 1. 記事IDをパラメータから取得し、該当する下書き記事データを記事データベース(articles)から取得する関数
+      // 2. 記事IDをパラメータから取得し、articlesとcategoryの中間テーブルであるarticles_categoryから
+      //    記事IDに登録されているカテゴリーIDを取得する関数
       const draftArticlesData = async () => {
-        const response = await fetch(
-          `${config.BACKEND_URL}/articles/${article_id}/draft`
-        );
-        const jsonData = await response.json();
-        return jsonData;
+        try {
+          const response = await fetch(
+            `${config.BACKEND_URL}/articles/draft/${id}`
+          );
+          const draftData = await response.json();
+          return draftData;
+        } catch (err) {
+          console.error(err);
+        }
       };
+      const data = await draftArticlesData();
 
-      // カテゴリーデータベース(category)からカテゴリー一覧全て取得するAPI
+      // カテゴリーデータベース(category)からカテゴリー一覧全て取得する関数
       const categoryData = async () => {
-        const response = await fetch(`${config.BACKEND_URL}/articles/category`);
-        const jsonData = await response.json();
-        return jsonData;
+        try {
+          const response = await fetch(
+            `${config.BACKEND_URL}/articles/category`
+          );
+          const category = await response.json();
+          return category;
+        } catch (err) {
+          console.error(err);
+        }
       };
 
-      try {
-        const data = await Promise.all([draftArticlesData(), categoryData()]);
-        setData(data);
-      } catch (err: any) {
-        sweetAlertOfError(err);
-      }
+      const category = await categoryData();
+      setData(data);
+      setCategory(category);
     })();
-  }, [user.uid, article_id]);
+  }, []);
 
-  return { data, setData };
+  // URLパラメータから記事IDを取得できなければ、つまりarticlesに下書きデータが存在しない場合
+  // ↓のuseEffectを実行。
+  useEffect(() => {
+    if (id) {
+      return;
+    }
+
+    (async () => {
+      // カテゴリーデータベース(category)からカテゴリー一覧全て取得する関数
+      const categoryData = async () => {
+        try {
+          const response = await fetch(
+            `${config.BACKEND_URL}/articles/category`
+          );
+          const category = await response.json();
+          return category;
+        } catch (err) {
+          console.error(err);
+        }
+      };
+      const category = await categoryData();
+      setData(data);
+      setCategory(category);
+    })();
+  }, []);
+
+  return { data, setData, category };
 };
 
 export { useArticles, useArticlesById, useUserArticleList, useUserArticlePost };
