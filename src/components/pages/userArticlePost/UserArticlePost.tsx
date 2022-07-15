@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps*/
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import SimpleMde from 'react-simplemde-editor';
@@ -33,8 +33,9 @@ import { SelectPulldown } from 'components/molecules/selectPulldown/SelectPulldo
 import DefaultLayout from 'components/templates/defaultLayout/DefaultLayout';
 import sweetAlertOfError from 'utils/sweetAlert/sweetAlertOfError';
 
-let articleIdOfFireStorage = '';
 const UserArticlePost = () => {
+  const [isDraftData, setIsDraftData] = useState(false);
+  const [fireStorageId, setFireStorageId] = useState('');
   const [text, setText] = useState('');
   const [markdownValue, setMarkdownValue] = useState('');
   const [fileNames, setFileNames] = useState<string[]>([]);
@@ -45,29 +46,32 @@ const UserArticlePost = () => {
   const { data, category } = useUserArticlePost();
   const navigate = useNavigate();
   const { username, id } = useParams();
+  const trimUserName = trimString(user.displayName);
 
   //  新規作成からUserArticlePostコンポーネントに遷移し、ファイル画像をfirebaseのStorageに保存した後、
   //  下書き保存前に意図せずurl遷移した際、firebaseのStorageに保存したファイル画像及びディレクトリを削除する。
-  useEffect(() => {
-    return () => {
-      if (id || !articleIdOfFireStorage) {
-        return;
-      }
-      (async () => {
-        try {
-          const trimUserName = trimString(username!);
-          const storageRef = ref(
-            storage,
-            `articleImages/${articleIdOfFireStorage}/${trimUserName}/`
-          );
-          const listResult = await listAll(storageRef);
-          listResult.items.forEach(async (item) => await deleteObject(item));
-        } catch (err) {
-          console.error(err);
-        }
-      })();
-    };
-  }, []);
+  // useEffect(() => {
+  //   return () => {
+  //     if (id || isDraftData) {
+  //       return;
+  //     }
+
+  //     (async () => {
+  //       console.log(isDraftData);
+  //       console.log(fireStorageId);
+  //       try {
+  //         const storageRef = ref(
+  //           storage,
+  //           `articleImages/${fireStorageId}/${trimUserName}/`
+  //         );
+  //         const listResult = await listAll(storageRef);
+  //         listResult.items.forEach(async (item) => await deleteObject(item));
+  //       } catch (err) {
+  //         console.error(err);
+  //       }
+  //     })();
+  //   };
+  // }, [isDraftData, fireStorageId]);
 
   // 1. ファイル画像をアップロードした際に発火する副作用。
   // 2. randomChar16メソッドを使って、ランダムな16桁の文字列を生成し、useStateのimageファイル名の文頭に付ける。
@@ -88,12 +92,19 @@ const UserArticlePost = () => {
     setFileNames(newFileNames);
 
     // 初回fireStorageにファイル画像を保存する際にrandomChar16関数を使用し、ストレージ用のIDを取得。
-    if (!articleIdOfFireStorage) {
-      articleIdOfFireStorage = randomChar16();
+    let newFireStorageId = '';
+    if (!fireStorageId) {
+      newFireStorageId = randomChar16();
+      setFireStorageId(newFireStorageId);
     }
+
+    // useStateの更新関数で値を更新した場合、即座に反映されないので、初回だけは下記のnewStroageUrlの値を
+    // 使用し、storageRefのディレクトリ名に充てる。
     const storageRef = ref(
       storage,
-      `articleImages/${articleIdOfFireStorage}/${trimName}/${fileName}`
+      fireStorageId
+        ? `articleImages/${fireStorageId}/${trimName}/${fileName}`
+        : `articleImages/${newFireStorageId}/${trimName}/${fileName}`
     );
     const uploadTask = uploadBytesResumable(storageRef, image);
     setImage(null);
@@ -169,9 +180,9 @@ const UserArticlePost = () => {
     ) {
       return;
     }
-    articleIdOfFireStorage = draftData.article_id_of_storage;
     const currentFileNames = draftData.file_names.split(',');
     const currentImages = draftData.images_url?.split(',');
+    setFireStorageId(draftData.article_id_of_storage);
     setFileNames(currentFileNames);
     setImages(currentImages);
   }, [data]);
@@ -207,7 +218,7 @@ const UserArticlePost = () => {
         letterBody: markdownValue,
         createdAt: new Date().toLocaleString(),
         public: 0,
-        articleIdOfStorage: articleIdOfFireStorage,
+        articleIdOfStorage: fireStorageId,
         fileNames: stringFileNames,
         imagesUrl: stringImages,
         category,
@@ -217,7 +228,6 @@ const UserArticlePost = () => {
         // URLパラメータから記事IDを取得できない場合、つまり下書きデータがデータベースに存在しない場合の処理。
         let response: Response;
         if (!id) {
-          console.log('最初の下書き保存');
           response = await fetch(`${config.BACKEND_URL}/articles/draft`, {
             method: 'POST',
             headers: {
@@ -227,7 +237,6 @@ const UserArticlePost = () => {
           });
           // URLパラメータから記事IDを取得できる場合、つまり下書きデータがデータベースに存在する場合の処理。
         } else {
-          console.log('下書きの上書き保存');
           response = await fetch(`${config.BACKEND_URL}/articles/draft/${id}`, {
             method: 'PUT',
             headers: {
@@ -238,7 +247,8 @@ const UserArticlePost = () => {
         }
 
         if (response.status === 200) {
-          navigate(`/articles/user/${user.displayName}/article_list`);
+          setIsDraftData(true);
+          navigate(`/articles/user/${trimUserName}/article_list`);
         } else if (response.status === 500) {
           sweetAlertOfError(
             `サーバー側のエラーにより下書きデータが保存されませんでした。\nエラー内容: ${await response.json()}`
@@ -280,13 +290,13 @@ const UserArticlePost = () => {
   return (
     <DefaultLayout>
       <>
-        {user.displayName === username ? (
+        {trimUserName === username ? (
           <main className={styles.global_container}>
             <div className={styles.container}>
               {category.length !== 0 && (
                 <>
                   <TemporarilyImageToFireStorage
-                    articleIdOfFireStorage={articleIdOfFireStorage}
+                    articleIdOfFireStorage={fireStorageId}
                     fileNames={fileNames}
                     images={images}
                     setFileNames={setFileNames}
@@ -296,7 +306,13 @@ const UserArticlePost = () => {
                   />
                   <form onSubmit={(e) => handleSubmit(e)}>
                     <div className={styles.container_main}>
-                      <ImageIcon image={image} onChange={changeImageHandler} />
+                      <div className={styles.image_icon}>
+                        <ImageIcon
+                          image={image}
+                          onChange={changeImageHandler}
+                        />
+                      </div>
+
                       <TextField
                         variant="outlined"
                         fullWidth
