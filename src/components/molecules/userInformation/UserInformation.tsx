@@ -2,14 +2,13 @@ import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Menu, MenuItem } from '@mui/material';
 import { deleteObject, listAll, ref } from 'firebase/storage';
-import MediaQuery from 'react-responsive';
 import swal from 'sweetalert';
 
 import { storage } from '../../../firebase';
 import { selectUser } from 'reducks/user/selectUser';
-import { UserAvatar } from 'components/atoms/button/userAvatar/UserAvatar';
 import sweetAlertOfSuccess from 'utils/sweetAlert/sweetAlertOfSuccess';
 import sweetAlertOfError from 'utils/sweetAlert/sweetAlertOfError';
+import { UserAvatar } from 'components/atoms/button/userAvatar/UserAvatar';
 import { UpdateProfile } from 'components/molecules/updateProfile/UpdateProfile';
 import { trimString } from 'utils/trimString/trimString';
 import { config } from 'config/applicationConfig';
@@ -124,91 +123,33 @@ const UserInformation = () => {
   };
 
   return (
-    <>
+    <div className={styles.container}>
+      <div className={styles.profile}>
+        <UserAvatar onClick={(e) => handleClick(e)} />
+        <div className={styles.profile_block}>
+          <span className={styles.profile_user}>ユーザー名</span>
+          <span className={styles.profile_name}>
+            {user.uid ? user.displayName : '----------'}
+          </span>
+        </div>
+      </div>
       {user.uid ? (
         <>
-          <MediaQuery query="(max-width: 600px)">
-            <div className={styles.container}>
-              <div
-                className={styles.profile_container}
-                title={user.displayName}
-              >
-                <UserAvatar onClick={(e) => handleClick(e)} />
-              </div>
-              <Menu
-                anchorEl={anchorEl}
-                keepMounted
-                open={Boolean(anchorEl)}
-                onClose={handleClose}
-              >
-                <MenuItem onClick={() => updateProfileInformation()}>
-                  プロフィール編集
-                </MenuItem>
-                <MenuItem onClick={() => deleteAccount()}>
-                  アカウント削除
-                </MenuItem>
-              </Menu>
-              <UpdateProfile open={open} modalClose={modalClose} />
-            </div>
-          </MediaQuery>
-          <MediaQuery query="(min-width: 600px)">
-            <div className={styles.container}>
-              <div
-                className={styles.profile_container}
-                title={user.displayName}
-              >
-                <UserAvatar onClick={(e) => handleClick(e)} />
-                <div className={styles.profile_block}>
-                  <p className={styles.profile_user}>ユーザー名</p>
-                  <p className={styles.profile_name}>{user.displayName}</p>
-                </div>
-              </div>
-              <Menu
-                anchorEl={anchorEl}
-                keepMounted
-                open={Boolean(anchorEl)}
-                onClose={handleClose}
-              >
-                <MenuItem onClick={() => updateProfileInformation()}>
-                  プロフィール編集
-                </MenuItem>
-                <MenuItem onClick={() => deleteAccount()}>
-                  アカウント削除
-                </MenuItem>
-              </Menu>
-              <UpdateProfile open={open} modalClose={modalClose} />
-            </div>
-          </MediaQuery>
+          <Menu
+            anchorEl={anchorEl}
+            keepMounted
+            open={Boolean(anchorEl)}
+            onClose={handleClose}
+          >
+            <MenuItem onClick={() => updateProfileInformation()}>
+              プロフィール編集
+            </MenuItem>
+            <MenuItem onClick={() => deleteAccount()}>アカウント削除</MenuItem>
+          </Menu>
+          <UpdateProfile open={open} modalClose={modalClose} />
         </>
-      ) : (
-        <>
-          <MediaQuery query="(max-width: 600px)">
-            <div className={styles.container}>
-              <div className={styles.profile_container} title="unknown">
-                {/* <AccountCircleIcon
-                  fontSize="large"
-                  className={styles.login_addicon}
-                /> */}
-              </div>
-            </div>
-          </MediaQuery>
-          <MediaQuery query="(min-width: 600px)">
-            <div className={styles.container}>
-              <div className={styles.profile_container} title="unknown">
-                {/* <AccountCircleIcon
-                  fontSize="large"
-                  className={styles.login_addicon}
-                /> */}
-                <div className={styles.profile_block}>
-                  <p className={styles.profile_user}>ユーザー名</p>
-                  <p className={styles.profile_name}>unknown</p>
-                </div>
-              </div>
-            </div>
-          </MediaQuery>
-        </>
-      )}
-    </>
+      ) : null}
+    </div>
   );
 };
 
