@@ -2,7 +2,7 @@ import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 
 import { selectUser } from 'reducks/user/selectUser';
-import { useUserArticleList } from 'hooks/components/articles/useArticles';
+import { useUserArticleList } from 'hooks/components/UserArticleList/useUserArticleList';
 import DefaultLayout from 'components/templates/defaultLayout/DefaultLayout';
 import Error403 from '../error/error403/Error403';
 import styles from './UserArticleList.module.scss';
@@ -20,23 +20,27 @@ const UserArticleList = () => {
 
   return (
     <DefaultLayout>
-      <main>
-        {trimUserName === username ? (
-          <div className={styles.container}>
-            <CardsInformation />
-            <AsideScrollTop />
-            {data && <SimpleCards cardsData={data.data} />}
-            {data?.pagination.paginationMaxCount && (
-              <Pagination
-                maxPage={data.pagination.paginationMaxCount}
-                url={`articles/user/${username}/article_list`}
-              />
-            )}
-          </div>
-        ) : (
-          <Error403 />
-        )}
-      </main>
+      <div className={styles.contaienr}>
+        <main>
+          {trimUserName === username ? (
+            <div className={styles.container}>
+              <div className={styles.cards_information}>
+                <CardsInformation />
+              </div>
+              <AsideScrollTop />
+              {data && <SimpleCards cardsData={data.data} />}
+              {data?.pagination.paginationMaxCount ? (
+                <Pagination
+                  maxPage={data.pagination.paginationMaxCount}
+                  url={`articles/user/${username}/article_list`}
+                />
+              ) : null}
+            </div>
+          ) : (
+            <Error403 />
+          )}
+        </main>
+      </div>
     </DefaultLayout>
   );
 };

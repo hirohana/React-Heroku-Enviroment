@@ -3,19 +3,25 @@ import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
 import DefaultLayout from 'components/templates/defaultLayout/DefaultLayout';
+import { Cards } from 'components/organisms/cards/Cards';
 import { selectUser } from 'reducks/user/selectUser';
 import { useArticles } from 'hooks/components/articles/useArticles';
 import { trimString } from 'utils/trimString/trimString';
-import { Cards } from 'components/organisms/cards/Cards';
 import TextField from 'components/molecules/textField/TextField';
 import { Pagination } from 'components/molecules/pagination/Pagination';
 import { LoadingIcon } from 'components/atoms/loadingIcon/LoadingIcon';
 import styles from './Articles.module.scss';
+import { SearchResultNotFound } from 'components/atoms/searchResultNotFound/SearchResultNotFound';
 
 const Articles = () => {
   const [loading, setLoading] = useState(true);
-  const { data, searchKeyword, setSearchKeyword, getArticlesBySearch } =
-    useArticles(setLoading);
+  const {
+    keyword,
+    data,
+    searchKeyword,
+    setSearchKeyword,
+    getArticlesBySearch,
+  } = useArticles(setLoading);
   const { user } = useSelector(selectUser);
   const trimUserName = trimString(user.displayName);
 
@@ -40,7 +46,7 @@ const Articles = () => {
               changeValues={setSearchKeyword}
               onSubmitHandler={getArticlesBySearch}
             />
-            {data?.data ? (
+            {data?.data.length ? (
               <>
                 <Cards data={data.data} />
                 <Pagination
@@ -48,7 +54,9 @@ const Articles = () => {
                   url="articles"
                 />
               </>
-            ) : null}
+            ) : (
+              <SearchResultNotFound keyword={keyword} />
+            )}
           </div>
         </main>
       )}

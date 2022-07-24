@@ -1,23 +1,16 @@
-import Grid from "@mui/material/Grid";
-import Container from "@mui/material/Container";
+import { ARTICLES_DATA } from 'types/articles/articles';
+import { Card } from 'components/molecules/card/Card';
 
-import { ARTICLES_DATA } from "types/articles/articles";
-import styles from "./Cards.module.scss";
-import { Card } from "components/molecules/card/Card";
+import styles from './Cards.module.scss';
 
 const Cards = (props: { data: ARTICLES_DATA }) => {
   const { data } = props;
 
   return (
-    <>
-      <main>
-        <Container sx={{ py: 4 }} maxWidth="md">
-          <Grid container spacing={4}>
-            {data && <Card data={data} />}
-          </Grid>
-        </Container>
-      </main>
-    </>
+    <div className={styles.container}>
+      {data.length !== 0 &&
+        data.map((card) => <Card data={card} key={card.title} />)}
+    </div>
   );
 };
 

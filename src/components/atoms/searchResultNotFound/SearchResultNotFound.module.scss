@@ -1,0 +1,12 @@
+@import '../../../styles/breakpoints/base';
+
+.container {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0px;
+
+  .keyword {
+    @extend .font-lg;
+    font-weight: bold;
+  }
+}
