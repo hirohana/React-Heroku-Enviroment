@@ -1,0 +1,34 @@
+@import '../../../styles/modules/valiables.scss';
+
+.comment_container {
+  border-bottom: 2px solid $cGray;
+  margin-top: 10px;
+  padding-bottom: 10px;
+
+  .threedot_timestamp {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .comment_information {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .user_informartion {
+    display: flex;
+    align-items: center;
+  }
+
+  .comment_text {
+    margin-top: 10px;
+  }
+}
+
+.delete_comment {
+  padding: 20px 0px;
+  background-color: $cGray;
+}
