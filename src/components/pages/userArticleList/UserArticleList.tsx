@@ -32,7 +32,7 @@ const UserArticleList = () => {
               {data?.pagination.paginationMaxCount ? (
                 <Pagination
                   maxPage={data.pagination.paginationMaxCount}
-                  url={`articles/user/${username}/article_list`}
+                  url={`user/${username}/article_list`}
                 />
               ) : null}
             </div>
